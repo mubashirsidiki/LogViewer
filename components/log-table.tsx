@@ -21,6 +21,7 @@ import {
   ChevronsRight,
   SlidersHorizontal,
   X,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -216,6 +224,29 @@ export function LogTable({ logs }: LogTableProps) {
     buildTextColumn("action", "Action"),
     buildTextColumn("statusCode", "StatusCode"),
     buildTextColumn("requestId", "RequestId"),
+    {
+      id: "copy",
+      header: () => <span className="sr-only">Copy</span>,
+      cell: ({ row }) => (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => copyRow(row.original)}
+                className="h-6 w-6"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Copy row</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
   ];
 
   // -----------------------------
@@ -268,6 +299,21 @@ export function LogTable({ logs }: LogTableProps) {
   const clearAllFilters = () => {
     table.resetColumnFilters();
     setColumnSearchVisible({});
+  };
+
+  const { toast } = useToast();
+
+  const copyRow = (entry: LogEntry) => {
+    try {
+      navigator.clipboard.writeText(JSON.stringify(entry));
+      toast({ title: "Copied", description: "Row copied to clipboard" });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to copy row",
+        variant: "destructive",
+      });
+    }
   };
 
   // -----------------------------
