@@ -84,10 +84,13 @@ export default function LogViewer() {
       // For demo purposes, we'll generate mock logs
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
+      const timestampDate = new Date(date)
+      timestampDate.setHours(10, 30, 0, 0)
+
       const mockLogs = [
         {
           id: "log-1",
-          timestamp: new Date(date.setHours(10, 30, 0)).toISOString(),
+          timestamp: timestampDate.toISOString(),
           level: "INFO",
           message: "Example log entry - This is a demo log message",
           service: selectedService,
