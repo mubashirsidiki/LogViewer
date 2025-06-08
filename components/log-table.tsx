@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   X,
   Copy,
+  BrainCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -79,13 +80,14 @@ interface LogEntry {
 
 interface LogTableProps {
   logs: LogEntry[];
+  onViewWithLLM?: (entry: LogEntry) => void;
 }
 
 // -----------------------------------------------------------------------------
 // Component
 // -----------------------------------------------------------------------------
 
-export function LogTable({ logs }: LogTableProps) {
+export function LogTable({ logs, onViewWithLLM }: LogTableProps) {
   // -----------------------------
   // Table state
   // -----------------------------
@@ -241,6 +243,29 @@ export function LogTable({ logs }: LogTableProps) {
               </Button>
             </TooltipTrigger>
             <TooltipContent>Copy row</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      id: "llm",
+      header: () => <span className="sr-only">LLM</span>,
+      cell: ({ row }) => (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onViewWithLLM?.(row.original)}
+                className="h-6 w-6"
+              >
+                <BrainCog className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View with LLM</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ),
