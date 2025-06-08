@@ -3,12 +3,24 @@
 import { useState, useEffect, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { CalendarIcon, RefreshCw, Settings } from "lucide-react"
+import {
+  CalendarIcon,
+  RefreshCw,
+  Settings,
+  BrainCog,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { LogTable } from "@/components/log-table"
 import { useToast } from "@/hooks/use-toast"
@@ -42,6 +54,10 @@ export default function LogViewer() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState<string>("")
+  const [selectedLog, setSelectedLog] = useState<any | null>(null)
+  const [llmExplanation, setLlmExplanation] = useState<string>("")
+  const [llmLoading, setLlmLoading] = useState(false)
+  const [openAIApiKey] = useLocalStorage("openAIApiKey", "")
 
   // Format date for display and API
   const formattedDate = format(date, "yyyy-MM-dd")
@@ -137,6 +153,63 @@ export default function LogViewer() {
   // Get current time in user's timezone
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
+  const viewWithLLM = async (entry: any) => {
+    setSelectedLog(entry)
+
+    if (!openAIApiKey) {
+      toast({
+        title: "Missing API Key",
+        description: "Add your OpenAI API key in Settings > LLM View",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLlmLoading(true)
+    setLlmExplanation("")
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openAIApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a helpful assistant that explains log entries in human readable form.",
+            },
+            {
+              role: "user",
+              content: `Explain the following log entry in simple terms:\n\n${JSON.stringify(
+                entry,
+                null,
+                2,
+              )}`,
+            },
+          ],
+          max_tokens: 150,
+        }),
+      })
+      const data = await res.json()
+      setLlmExplanation(
+        data.choices?.[0]?.message?.content?.trim() || "No explanation",
+      )
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "Failed to fetch explanation",
+        variant: "destructive",
+      })
+    } finally {
+      setLlmLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -214,8 +287,29 @@ export default function LogViewer() {
           <Skeleton className="h-[400px] w-full" />
         </div>
       ) : (
-        <LogTable logs={logs} />
+        <LogTable logs={logs} onViewWithLLM={viewWithLLM} />
       )}
+
+      <Dialog open={!!selectedLog} onOpenChange={(v) => !v && setSelectedLog(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BrainCog className="h-4 w-4" /> LLM View
+            </DialogTitle>
+            <DialogDescription>Explanation powered by OpenAI</DialogDescription>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="grid md:grid-cols-2 gap-4">
+              <pre className="p-2 bg-muted rounded text-xs overflow-auto whitespace-pre-wrap">
+{JSON.stringify(selectedLog, null, 2)}
+              </pre>
+              <div className="p-2 bg-muted rounded text-sm whitespace-pre-wrap">
+                {llmLoading ? "Loading..." : llmExplanation}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -57,8 +57,19 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import AutoSizer from "react-virtualized-auto-sizer";                    // ⚠ tweak if your paths differ
 
 import {
-  Trash, Plus, ArrowLeft, Clock, Table, Server, Globe,
-  Palette, RotateCcw, Save, MapPin, X,
+  Trash,
+  Plus,
+  ArrowLeft,
+  Clock,
+  Table,
+  Server,
+  Globe,
+  Palette,
+  RotateCcw,
+  Save,
+  MapPin,
+  X,
+  BrainCog,
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -119,6 +130,7 @@ export default function SettingsPage() {
   const [showLineNumbers, setShowLineNumbers] = useLocalStorage("showLineNumbers", true);
   const [dateFormat, setDateFormat] = useLocalStorage("dateFormat", "yyyy-MM-dd");
   const [timeFormat, setTimeFormat] = useLocalStorage("timeFormat", "HH:mm:ss");
+  const [openAIApiKey, setOpenAIApiKey] = useLocalStorage("openAIApiKey", "");
 
   /* ───── misc helpers (identical logic, fewer crashes) ───── */
   const detectTimezone = () => {
@@ -274,7 +286,7 @@ export default function SettingsPage() {
       </header>
 
       <Tabs defaultValue="services" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="services" className="flex items-center gap-2">
             <Server className="h-4 w-4" />
             <span>Services</span>
@@ -286,6 +298,10 @@ export default function SettingsPage() {
           <TabsTrigger value="time" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span>Time</span>
+          </TabsTrigger>
+          <TabsTrigger value="llm" className="flex items-center gap-2">
+            <BrainCog className="h-4 w-4" />
+            <span>LLM View</span>
           </TabsTrigger>
         </TabsList>
 
@@ -493,6 +509,36 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* LLM View Tab */}
+        <TabsContent value="llm" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BrainCog className="h-5 w-5 text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-sky-500 to-indigo-500" />
+                LLM View
+              </CardTitle>
+              <CardDescription>
+                Paste your OpenAI API key to enable AI powered log explanations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="openai-key">OpenAI API Key</Label>
+                <Input
+                  id="openai-key"
+                  type="password"
+                  value={openAIApiKey}
+                  onChange={(e) => setOpenAIApiKey(e.target.value)}
+                  placeholder="sk-..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  The key is stored locally in your browser.
+                </p>
               </div>
             </CardContent>
           </Card>
